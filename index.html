@@ -79,7 +79,7 @@
             <small>Taxa atual (1 USD → BRL):</small>
             <strong id="rate-display">—</strong>
             <span id="rate-side" class="pill" title="Tipo de preço">venda</span>
-            <span id="rate-stale" class="pill warn" hidden>Sem conexão — usando taxa anterior</span>
+            
             <div id="rate-meta" style="margin-top:6px; color:var(--muted); font-size:.85rem">Atualizado: —</div>
           </div>
           <div class="actions">
@@ -127,7 +127,7 @@ if(!localStorage.getItem('gg_alert_shown')){
   const $ = (sel) => document.querySelector(sel);
   const rateDisplay = $('#rate-display');
   const rateMeta = $('#rate-meta');
-  const staleEl = $('#rate-stale');
+  const staleEl = null;
   const sideBadge = $('#rate-side');
   const errorBox = $('#error');
   const refreshBtn = $('#refresh');
@@ -163,7 +163,7 @@ if(!localStorage.getItem('gg_alert_shown')){
   if(savedSide){ sideSelect.value = savedSide; sideBadge.textContent = savedSide === 'bid' ? 'compra' : 'venda'; }
 
   function showRate(){ try{ rateDisplay.textContent = Number(currentRate).toFixed(4); }catch{ rateDisplay.textContent = '—'; } }
-  function setStale(stale){ staleEl.hidden = !stale; }
+  function setStale(){ /* aviso visual desativado */ }
   function updateMeta(ts, manual=false){
     if(manual){ rateMeta.textContent = 'Taxa manual definida por você'; return; }
     if(!ts){ rateMeta.textContent = 'Atualizado: —'; return; }
