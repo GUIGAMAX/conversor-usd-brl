@@ -166,13 +166,19 @@ if(!localStorage.getItem('gg_alert_shown')){
 
   let currentRate = parseFloat(localStorage.getItem('usd_brl_rate')) || 5.50;
   let inverted = false;
+  let lastSuccess = 0; // timestamp do último sucesso
+  let failStreak = 0;  // falhas consecutivas
 
   const savedSide = localStorage.getItem('usd_brl_side');
   if(savedSide){ sideSelect.value = savedSide; sideBadge.textContent = savedSide === 'bid' ? 'compra' : 'venda'; }
 
   function showRate(){ rateDisplay.textContent = currentRate.toFixed(4); }
   function setStale(stale){ staleBadge.hidden = !stale; }
-  function updateMeta(ts){ rateMeta.textContent = ts ? `Atualizado: ${new Date(ts).toLocaleString('pt-BR')}` : 'Atualizado: —'; }
+  function updateMeta(ts, manual=false){
+    if(manual){ rateMeta.textContent = 'Taxa manual definida por você'; return; }
+    if(!ts){ rateMeta.textContent = 'Atualizado: —'; return; }
+    rateMeta.textContent = `Atualizado: ${new Date(ts).toLocaleString('pt-BR')}`;
+  }` : 'Atualizado: —'; }
 
   async function fetchRate(){
     try{
@@ -190,10 +196,14 @@ if(!localStorage.getItem('gg_alert_shown')){
         showRate();
         updateMeta(p?.create_date || Date.now());
         recalc();
+        lastSuccess = Date.now();
+        failStreak = 0;
       }else{ throw new Error('Resposta inválida'); }
     }catch(err){
-      setStale(true);
-      errorBox.textContent = 'Sem conexão ou serviço indisponível. Usando a última taxa salva.';
+      failStreak++;
+      const muitoTempo = Date.now() - lastSuccess > 180000; // >3 min sem sucesso
+      if(muitoTempo || failStreak >= 3){ setStale(true); }
+      errorBox.textContent = 'Não foi possível atualizar agora. Usando a última taxa salva.';
       errorBox.hidden = false;
       showRate();
     }
@@ -212,7 +222,7 @@ if(!localStorage.getItem('gg_alert_shown')){
     if(input==null) return;
     const r = parseFloat(String(input).replace(',', '.'));
     if(!Number.isFinite(r) || r <= 0){ alert('Valor inválido.'); return; }
-    currentRate = r; localStorage.setItem('usd_brl_rate', String(currentRate)); setStale(true); updateMeta(null); showRate(); recalc();
+    currentRate = r; localStorage.setItem('usd_brl_rate', String(currentRate)); setStale(false); updateMeta(null, true); showRate(); recalc();
   }
 
   function swap(){
