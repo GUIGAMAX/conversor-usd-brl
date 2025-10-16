@@ -13,15 +13,10 @@
   <!-- Favicon SVG com iniciais GG -->
   <link rel="icon" type="image/svg+xml" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="%230b1220"/><stop offset="1" stop-color="%2310192d"/></linearGradient></defs><rect width="64" height="64" rx="12" fill="url(%23g)"/><text x="50%" y="54%" text-anchor="middle" font-family="Inter,Segoe UI,Arial" font-size="28" fill="%23c7ffd8" font-weight="700">GG</text></svg>' />
   <style>
-    :root{
-      --bg:#0b1220;--bg-soft:#10192d;--ink:#e8f0ff;--muted:#9fb3c8;--accent:#59d185;--danger:#ff6b6b;--field:#0e1730;--border:rgba(255,255,255,.12);
-    }
-    @media (prefers-color-scheme: light){
-      :root{--bg:#f5f7fb;--bg-soft:#ffffff;--ink:#1b2333;--muted:#5a6b82;--accent:#2db46e;--danger:#d64f4f;--field:#f0f3f9;--border:rgba(16,25,45,.12)}
-    }
+    :root{--bg:#0b1220;--bg-soft:#10192d;--ink:#e8f0ff;--muted:#9fb3c8;--accent:#59d185;--danger:#ff6b6b;--field:#0e1730;--border:rgba(255,255,255,.12)}
+    @media (prefers-color-scheme: light){:root{--bg:#f5f7fb;--bg-soft:#ffffff;--ink:#1b2333;--muted:#5a6b82;--accent:#2db46e;--danger:#d64f4f;--field:#f0f3f9;--border:rgba(16,25,45,.12)}}
     [data-theme="light"]{--bg:#f5f7fb;--bg-soft:#ffffff;--ink:#1b2333;--muted:#5a6b82;--accent:#2db46e;--danger:#d64f4f;--field:#f0f3f9;--border:rgba(16,25,45,.12)}
     [data-theme="dark"]{--bg:#0b1220;--bg-soft:#10192d;--ink:#e8f0ff;--muted:#9fb3c8;--accent:#59d185;--danger:#ff6b6b;--field:#0e1730;--border:rgba(255,255,255,.12)}
-
     *{box-sizing:border-box}
     body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;background:radial-gradient(1200px 800px at 10% 10%,rgba(19,32,58,.65) 0%,transparent 60%),var(--bg);color:var(--ink);min-height:100svh;display:grid;place-items:center;padding:24px}
     .wrap{width:min(900px,96vw)}
@@ -30,7 +25,6 @@
     .brand small{color:var(--muted);font-weight:600}
     .top-actions{display:flex;gap:8px;align-items:center}
     .toggle{border:1px solid var(--border);background:var(--bg-soft);color:var(--ink);padding:8px 12px;border-radius:10px;cursor:pointer}
-
     .card{background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.02));border:1px solid var(--border);border-radius:18px;box-shadow:0 10px 30px rgba(0,0,0,.10);overflow:hidden}
     header{padding:22px 22px 8px}
     header h1{margin:0 0 6px;font-size:clamp(1.2rem,2.5vw,1.6rem)}
@@ -67,7 +61,6 @@
       </div>
     </div>
 
-    <!-- Mini landing com botão "Abrir Conversor" -->
     <section class="hero" id="inicio">
       <h2>Bem-vindo!</h2>
       <p>Converta dólar para real com cotação ao vivo (bid/ask), pronto para celular e com tema claro/escuro.</p>
@@ -134,7 +127,7 @@ if(!localStorage.getItem('gg_alert_shown')){
   const $ = (sel) => document.querySelector(sel);
   const rateDisplay = $('#rate-display');
   const rateMeta = $('#rate-meta');
-  const staleBadge = $('#rate-stale');
+  const staleEl = $('#rate-stale');
   const sideBadge = $('#rate-side');
   const errorBox = $('#error');
   const refreshBtn = $('#refresh');
@@ -146,39 +139,36 @@ if(!localStorage.getItem('gg_alert_shown')){
   const brl = $('#brl');
   const themeToggle = document.getElementById('theme-toggle');
 
-  // THEME: auto / light / dark (persistente)
-  function applyTheme(v){
-    document.documentElement.setAttribute('data-theme', v);
-    localStorage.setItem('gg_theme', v);
-  }
+  // THEME
+  function applyTheme(v){ document.documentElement.setAttribute('data-theme', v); localStorage.setItem('gg_theme', v); }
   const savedTheme = localStorage.getItem('gg_theme') || 'auto';
   applyTheme(savedTheme);
   themeToggle.addEventListener('click', ()=>{
     const current = localStorage.getItem('gg_theme') || 'auto';
     const next = current === 'auto' ? 'dark' : current === 'dark' ? 'light' : 'auto';
-    applyTheme(next);
-    themeToggle.textContent = next==='dark'? '☀️' : next==='light'? '🌙' : '🌙/☀️';
+    applyTheme(next); themeToggle.textContent = next==='dark'? '☀️' : next==='light'? '🌙' : '🌙/☀️';
   });
   themeToggle.textContent = savedTheme==='dark'? '☀️' : savedTheme==='light'? '🌙' : '🌙/☀️';
 
   const fmtBRL = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
   const fmtUSD = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
 
-  let currentRate = parseFloat(localStorage.getItem('usd_brl_rate')) || 5.50;
+  let currentRate = parseFloat(localStorage.getItem('usd_brl_rate'));
+  if(!Number.isFinite(currentRate) || currentRate <= 0) currentRate = 5.50; // fallback inicial
   let inverted = false;
-  let lastSuccess = 0; // timestamp do último sucesso
-  let failStreak = 0;  // falhas consecutivas
+  let lastSuccess = 0; // último sucesso de atualização
+  let failStreak = 0;  // falhas seguidas
 
   const savedSide = localStorage.getItem('usd_brl_side');
   if(savedSide){ sideSelect.value = savedSide; sideBadge.textContent = savedSide === 'bid' ? 'compra' : 'venda'; }
 
-  function showRate(){ rateDisplay.textContent = currentRate.toFixed(4); }
-  function setStale(stale){ staleBadge.hidden = !stale; }
+  function showRate(){ try{ rateDisplay.textContent = Number(currentRate).toFixed(4); }catch{ rateDisplay.textContent = '—'; } }
+  function setStale(stale){ staleEl.hidden = !stale; }
   function updateMeta(ts, manual=false){
     if(manual){ rateMeta.textContent = 'Taxa manual definida por você'; return; }
     if(!ts){ rateMeta.textContent = 'Atualizado: —'; return; }
     rateMeta.textContent = `Atualizado: ${new Date(ts).toLocaleString('pt-BR')}`;
-  }` : 'Atualizado: —'; }
+  }
 
   async function fetchRate(){
     try{
@@ -186,22 +176,22 @@ if(!localStorage.getItem('gg_alert_shown')){
       const r = await fetch('https://economia.awesomeapi.com.br/json/last/USD-BRL',{cache:'no-store'});
       if(!r.ok) throw new Error('Falha ao buscar taxa');
       const data = await r.json();
-      const p = data?.USDBRL;
-      const side = sideSelect.value; // 'bid' (compra) ou 'ask' (venda)
-      const raw = parseFloat(p?.[side]);
+      const p = data && data.USDBRL;
+      const side = sideSelect.value;
+      const raw = p ? parseFloat(p[side]) : NaN;
       if(Number.isFinite(raw) && raw > 0){
         currentRate = raw;
         localStorage.setItem('usd_brl_rate', String(currentRate));
         setStale(false);
         showRate();
-        updateMeta(p?.create_date || Date.now());
+        updateMeta(p.create_date || Date.now());
         recalc();
         lastSuccess = Date.now();
         failStreak = 0;
       }else{ throw new Error('Resposta inválida'); }
     }catch(err){
       failStreak++;
-      const muitoTempo = Date.now() - lastSuccess > 180000; // >3 min sem sucesso
+      const muitoTempo = Date.now() - lastSuccess > 180000; // 3 min sem sucesso
       if(muitoTempo || failStreak >= 3){ setStale(true); }
       errorBox.textContent = 'Não foi possível atualizar agora. Usando a última taxa salva.';
       errorBox.hidden = false;
@@ -218,11 +208,16 @@ if(!localStorage.getItem('gg_alert_shown')){
   }
 
   function setManualRate(){
-    const input = prompt('Informe a taxa desejada (1 USD em BRL):', currentRate.toFixed(4));
+    const input = prompt('Informe a taxa desejada (1 USD em BRL):', Number(currentRate).toFixed(4));
     if(input==null) return;
     const r = parseFloat(String(input).replace(',', '.'));
     if(!Number.isFinite(r) || r <= 0){ alert('Valor inválido.'); return; }
-    currentRate = r; localStorage.setItem('usd_brl_rate', String(currentRate)); setStale(false); updateMeta(null, true); showRate(); recalc();
+    currentRate = r;
+    localStorage.setItem('usd_brl_rate', String(currentRate));
+    setStale(false);
+    updateMeta(null, true);
+    showRate();
+    recalc();
   }
 
   function swap(){
@@ -234,6 +229,7 @@ if(!localStorage.getItem('gg_alert_shown')){
     recalc();
   }
 
+  // Eventos
   usd.addEventListener('input', recalc);
   refreshBtn.addEventListener('click', fetchRate);
   editRateBtn.addEventListener('click', setManualRate);
@@ -249,9 +245,10 @@ if(!localStorage.getItem('gg_alert_shown')){
     fetchRate();
   });
 
+  // Init
+  showRate(); // mostra taxa inicial (fallback/localStorage)
+  fetchRate(); // busca taxa ao vivo
   setInterval(fetchRate, 30000);
-  showRate();
-  fetchRate();
 })();
 </script>
 </body>
