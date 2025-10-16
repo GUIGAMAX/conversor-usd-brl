@@ -1,93 +1,137 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-theme="auto">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Conversor USD ⇄ BRL (ao vivo)</title>
+  <title>Conversor USD ⇄ BRL — Guilherme Goulart</title>
+  <meta name="description" content="Conversor de Dólar (USD) para Real (BRL) com cotação ao vivo. Desenvolvido por Guilherme Goulart." />
+  <meta property="og:title" content="Conversor USD ⇄ BRL — Guilherme Goulart" />
+  <meta property="og:description" content="Cotação ao vivo (bid/ask), modo claro/escuro e compatível com celular." />
+  <meta property="og:type" content="website" />
+  <meta name="theme-color" content="#0b1220" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#f5f7fb" media="(prefers-color-scheme: light)">
+  <!-- Favicon SVG com iniciais GG -->
+  <link rel="icon" type="image/svg+xml" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="%230b1220"/><stop offset="1" stop-color="%2310192d"/></linearGradient></defs><rect width="64" height="64" rx="12" fill="url(%23g)"/><text x="50%" y="54%" text-anchor="middle" font-family="Inter,Segoe UI,Arial" font-size="28" fill="%23c7ffd8" font-weight="700">GG</text></svg>' />
   <style>
-    :root{--bg:#0b1220;--card:#10192d;--muted:#9fb3c8;--accent:#59d185;--danger:#ff6b6b}
+    :root{
+      --bg:#0b1220;--bg-soft:#10192d;--ink:#e8f0ff;--muted:#9fb3c8;--accent:#59d185;--danger:#ff6b6b;--field:#0e1730;--border:rgba(255,255,255,.12);
+    }
+    @media (prefers-color-scheme: light){
+      :root{--bg:#f5f7fb;--bg-soft:#ffffff;--ink:#1b2333;--muted:#5a6b82;--accent:#2db46e;--danger:#d64f4f;--field:#f0f3f9;--border:rgba(16,25,45,.12)}
+    }
+    [data-theme="light"]{--bg:#f5f7fb;--bg-soft:#ffffff;--ink:#1b2333;--muted:#5a6b82;--accent:#2db46e;--danger:#d64f4f;--field:#f0f3f9;--border:rgba(16,25,45,.12)}
+    [data-theme="dark"]{--bg:#0b1220;--bg-soft:#10192d;--ink:#e8f0ff;--muted:#9fb3c8;--accent:#59d185;--danger:#ff6b6b;--field:#0e1730;--border:rgba(255,255,255,.12)}
+
     *{box-sizing:border-box}
-    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;background:radial-gradient(1200px 800px at 10% 10%,#13203a 0%,#0b1220 60%),var(--bg);color:#e8f0ff;min-height:100svh;display:grid;place-items:center;padding:24px}
-    .card{width:min(820px,95vw);background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.02));border:1px solid rgba(255,255,255,.08);border-radius:18px;box-shadow:0 10px 30px rgba(0,0,0,.35);overflow:hidden}
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;background:radial-gradient(1200px 800px at 10% 10%,rgba(19,32,58,.65) 0%,transparent 60%),var(--bg);color:var(--ink);min-height:100svh;display:grid;place-items:center;padding:24px}
+    .wrap{width:min(900px,96vw)}
+    .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+    .brand{font-weight:800;letter-spacing:.3px}
+    .brand small{color:var(--muted);font-weight:600}
+    .top-actions{display:flex;gap:8px;align-items:center}
+    .toggle{border:1px solid var(--border);background:var(--bg-soft);color:var(--ink);padding:8px 12px;border-radius:10px;cursor:pointer}
+
+    .card{background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.02));border:1px solid var(--border);border-radius:18px;box-shadow:0 10px 30px rgba(0,0,0,.10);overflow:hidden}
     header{padding:22px 22px 8px}
-    header h1{margin:0 0 6px;font-size:1.4rem}
+    header h1{margin:0 0 6px;font-size:clamp(1.2rem,2.5vw,1.6rem)}
     header p{margin:0;color:var(--muted);font-size:.95rem}
     .content{display:grid;gap:18px;padding:22px}
     .row{display:grid;gap:12px}
     @media(min-width:640px){.row{grid-template-columns:1fr auto 1fr;align-items:end}}
     label{display:block;font-size:.9rem;color:var(--muted);margin:0 0 6px}
-    input[type="number"], input[readonly]{width:100%;padding:14px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:#0e1730;color:#e8f0ff;font-size:1.05rem;outline:none}
+    input[type="number"], input[readonly]{width:100%;padding:14px;border-radius:12px;border:1px solid var(--border);background:var(--field);color:var(--ink);font-size:1.05rem;outline:none}
     input[type="number"]:focus{border-color:#5fa8ff;box-shadow:0 0 0 3px rgba(95,168,255,.2)}
-    .swap{align-self:center;justify-self:center;border:none;background:transparent;color:#cfe1ff;font-size:1.6rem;cursor:pointer;line-height:1;padding:10px;border-radius:10px}
-    .swap:hover{background:rgba(255,255,255,.06)}
-    .rate{display:grid;gap:10px;align-items:center;grid-template-columns:1fr auto; padding:10px 12px;border-radius:12px;background:#0e1730;border:1px solid rgba(255,255,255,.08)}
-    .rate small{color:var(--muted)}
-    .pill{display:inline-flex;gap:8px;align-items:center;background:rgba(89,209,133,.12);border:1px solid rgba(89,209,133,.35);color:#c7ffd8;padding:8px 10px;border-radius:999px;font-size:.85rem}
-    .pill.warn{background:rgba(255,107,107,.12);border-color:rgba(255,107,107,.35);color:#ffd1d1}
+    .swap{align-self:center;justify-self:center;border:none;background:transparent;color:var(--muted);font-size:1.6rem;cursor:pointer;line-height:1;padding:10px;border-radius:10px}
+    .swap:hover{background:rgba(0,0,0,.06)}
+    .rate{display:grid;gap:10px;align-items:center;grid-template-columns:1fr auto; padding:10px 12px;border-radius:12px;background:var(--field);border:1px solid var(--border)}
+    .pill{display:inline-flex;gap:8px;align-items:center;background:rgba(89,209,133,.12);border:1px solid rgba(89,209,133,.35);color:#0f5132;padding:8px 10px;border-radius:999px;font-size:.85rem}
+    .pill.warn{background:rgba(255,107,107,.12);border-color:rgba(255,107,107,.35);color:#6b1010}
     .actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-    select, button.primary, button.secondary{padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.18);background:#13224a;color:#e8f0ff;cursor:pointer}
+    select, button.primary, button.secondary{padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--bg-soft);color:var(--ink);cursor:pointer}
     button.primary{background:var(--accent);color:#0b1220;border:none;font-weight:700}
-    button.secondary{background:transparent}
-    .out{padding:16px;border-radius:12px;background:#0e1730;border:1px solid rgba(255,255,255,.08);font-size:1.2rem}
+    .out{padding:16px;border-radius:12px;background:var(--field);border:1px solid var(--border);font-size:1.2rem}
     .error{color:var(--danger);font-size:.95rem}
     footer{padding:10px 22px 22px;color:var(--muted);font-size:.85rem;text-align:center}
+    .hero{margin:4px 0 16px;padding:12px 16px;border:1px dashed var(--border);border-radius:14px;background:var(--bg-soft)}
+    .hero h2{margin:0 0 6px;font-size:1rem}
+    .hero p{margin:0 0 10px;color:var(--muted)}
+    .hero .go{display:inline-block;background:var(--accent);color:#0b1220;padding:10px 14px;border-radius:12px;text-decoration:none;font-weight:800}
   </style>
 </head>
 <body>
-  <div class="card" role="region" aria-label="Conversor de moedas USD para BRL">
-    <header>
-      <h1>Conversor USD ⇄ BRL</h1>
-      <p>Converta em tempo real com a cotação de mercado (atualiza automaticamente).</p>
-    </header>
-
-    <div class="content">
-      <div class="rate" aria-live="polite">
-        <div>
-          <small>Taxa atual (1 USD → BRL):</small>
-          <strong id="rate-display">—</strong>
-          <span id="rate-side" class="pill" title="Tipo de preço">venda</span>
-          <span id="rate-stale" class="pill warn" hidden>Sem conexão — usando taxa anterior</span>
-          <div id="rate-meta" style="margin-top:6px; color:var(--muted); font-size:.85rem">Atualizado: —</div>
-        </div>
-        <div class="actions">
-          <label for="side" style="color:var(--muted);font-size:.85rem">Preço:</label>
-          <select id="side" title="Escolha entre preço de compra (bid) ou venda (ask)">
-            <option value="ask">Venda (ask)</option>
-            <option value="bid">Compra (bid)</option>
-          </select>
-          <button id="refresh" class="secondary" title="Atualizar agora">Atualizar</button>
-          <button id="edit-rate" class="secondary" title="Definir taxa manual">Definir taxa</button>
-        </div>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="brand">Conversor USD ⇄ BRL <small>por Guilherme Goulart</small></div>
+      <div class="top-actions">
+        <button id="theme-toggle" class="toggle" title="Alternar tema">🌙/☀️</button>
       </div>
-
-      <div class="row">
-        <div>
-          <label for="usd">Valor em USD</label>
-          <input id="usd" type="number" step="0.01" min="0" placeholder="Ex.: 25.50" />
-        </div>
-        <button id="swap" class="swap" title="Inverter conversão" aria-label="Inverter">⇆</button>
-        <div>
-          <label for="brl">Resultado</label>
-          <input id="brl" type="text" readonly class="out" placeholder="R$ 0,00" />
-        </div>
-      </div>
-
-      <div class="error" id="error" role="alert" hidden></div>
-      <button id="copy" class="primary">Copiar resultado</button>
     </div>
 
-    <footer>
-      <p>Fonte em tempo real: <code>economia.awesomeapi.com.br</code> (cotações USD/BRL com <em>bid/ask</em>).</p>
-      <p>© 2025 — Desenvolvido por <strong>Guilherme Goulart</strong>.</p>
-    </footer>
+    <!-- Mini landing com botão "Abrir Conversor" -->
+    <section class="hero" id="inicio">
+      <h2>Bem-vindo!</h2>
+      <p>Converta dólar para real com cotação ao vivo (bid/ask), pronto para celular e com tema claro/escuro.</p>
+      <a class="go" href="#converter">Abrir Conversor</a>
+    </section>
+
+    <div id="converter" class="card" role="region" aria-label="Conversor de moedas USD para BRL">
+      <header>
+        <h1>Conversor USD ⇄ BRL</h1>
+        <p>Tempo real (atualiza automaticamente). Escolha entre preço de <strong>venda (ask)</strong> e <strong>compra (bid)</strong>.</p>
+      </header>
+
+      <div class="content">
+        <div class="rate" aria-live="polite">
+          <div>
+            <small>Taxa atual (1 USD → BRL):</small>
+            <strong id="rate-display">—</strong>
+            <span id="rate-side" class="pill" title="Tipo de preço">venda</span>
+            <span id="rate-stale" class="pill warn" hidden>Sem conexão — usando taxa anterior</span>
+            <div id="rate-meta" style="margin-top:6px; color:var(--muted); font-size:.85rem">Atualizado: —</div>
+          </div>
+          <div class="actions">
+            <label for="side" style="color:var(--muted);font-size:.85rem">Preço:</label>
+            <select id="side" title="Escolha entre preço de compra (bid) ou venda (ask)">
+              <option value="ask">Venda (ask)</option>
+              <option value="bid">Compra (bid)</option>
+            </select>
+            <button id="refresh" class="secondary" title="Atualizar agora">Atualizar</button>
+            <button id="edit-rate" class="secondary" title="Definir taxa manual">Definir taxa</button>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label for="usd">Valor em USD</label>
+            <input id="usd" inputmode="decimal" type="number" step="0.01" min="0" placeholder="Ex.: 25.50" />
+          </div>
+          <button id="swap" class="swap" title="Inverter conversão" aria-label="Inverter">⇆</button>
+          <div>
+            <label for="brl">Resultado</label>
+            <input id="brl" type="text" readonly class="out" placeholder="R$ 0,00" />
+          </div>
+        </div>
+
+        <div class="error" id="error" role="alert" hidden></div>
+        <button id="copy" class="primary">Copiar resultado</button>
+      </div>
+
+      <footer>
+        <p>Fonte em tempo real: <code>economia.awesomeapi.com.br</code> (USD/BRL bid/ask).</p>
+        <p>© 2025 — Desenvolvido por <strong>Guilherme Goulart</strong>.</p>
+      </footer>
+    </div>
   </div>
 
 <script>
-alert('Conversor desenvolvido por Guilherme Goulart');
+// Alerta de autoria apenas na primeira visita
+if(!localStorage.getItem('gg_alert_shown')){
+  alert('Conversor desenvolvido por Guilherme Goulart');
+  localStorage.setItem('gg_alert_shown','1');
+}
+
 (function(){
   const $ = (sel) => document.querySelector(sel);
-  const usd = $('#usd');
-  const brl = $('#brl');
   const rateDisplay = $('#rate-display');
   const rateMeta = $('#rate-meta');
   const staleBadge = $('#rate-stale');
@@ -98,30 +142,37 @@ alert('Conversor desenvolvido por Guilherme Goulart');
   const copyBtn = $('#copy');
   const swapBtn = $('#swap');
   const sideSelect = $('#side');
+  const usd = $('#usd');
+  const brl = $('#brl');
+  const themeToggle = document.getElementById('theme-toggle');
+
+  // THEME: auto / light / dark (persistente)
+  function applyTheme(v){
+    document.documentElement.setAttribute('data-theme', v);
+    localStorage.setItem('gg_theme', v);
+  }
+  const savedTheme = localStorage.getItem('gg_theme') || 'auto';
+  applyTheme(savedTheme);
+  themeToggle.addEventListener('click', ()=>{
+    const current = localStorage.getItem('gg_theme') || 'auto';
+    const next = current === 'auto' ? 'dark' : current === 'dark' ? 'light' : 'auto';
+    applyTheme(next);
+    themeToggle.textContent = next==='dark'? '☀️' : next==='light'? '🌙' : '🌙/☀️';
+  });
+  themeToggle.textContent = savedTheme==='dark'? '☀️' : savedTheme==='light'? '🌙' : '🌙/☀️';
 
   const fmtBRL = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
   const fmtUSD = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
 
-  let currentRate = parseFloat(localStorage.getItem('usd_brl_rate')) || 5.50; // fallback
-  let inverted = false; // false: USD->BRL, true: BRL->USD
+  let currentRate = parseFloat(localStorage.getItem('usd_brl_rate')) || 5.50;
+  let inverted = false;
 
-  // Restaurar preferência de lado (bid/ask)
   const savedSide = localStorage.getItem('usd_brl_side');
   if(savedSide){ sideSelect.value = savedSide; sideBadge.textContent = savedSide === 'bid' ? 'compra' : 'venda'; }
 
-  function showRate(){
-    rateDisplay.textContent = currentRate.toFixed(4);
-  }
-
-  function setStale(stale){
-    staleBadge.hidden = !stale;
-  }
-
-  function updateMeta(ts){
-    if(!ts){ rateMeta.textContent = 'Atualizado: —'; return; }
-    const when = new Date(ts);
-    rateMeta.textContent = `Atualizado: ${when.toLocaleString('pt-BR')}`;
-  }
+  function showRate(){ rateDisplay.textContent = currentRate.toFixed(4); }
+  function setStale(stale){ staleBadge.hidden = !stale; }
+  function updateMeta(ts){ rateMeta.textContent = ts ? `Atualizado: ${new Date(ts).toLocaleString('pt-BR')}` : 'Atualizado: —'; }
 
   async function fetchRate(){
     try{
@@ -139,9 +190,7 @@ alert('Conversor desenvolvido por Guilherme Goulart');
         showRate();
         updateMeta(p?.create_date || Date.now());
         recalc();
-      }else{
-        throw new Error('Resposta inválida');
-      }
+      }else{ throw new Error('Resposta inválida'); }
     }catch(err){
       setStale(true);
       errorBox.textContent = 'Sem conexão ou serviço indisponível. Usando a última taxa salva.';
@@ -153,71 +202,35 @@ alert('Conversor desenvolvido por Guilherme Goulart');
   function recalc(){
     const val = parseFloat(String(usd.value).replace(',', '.'));
     if(Number.isFinite(val)){
-      if(!inverted){
-        const out = val * currentRate;
-        brl.value = fmtBRL.format(out);
-      }else{
-        const out = val / currentRate;
-        brl.value = fmtUSD.format(out);
-      }
-    }else{
-      brl.value = '';
-    }
+      if(!inverted){ brl.value = fmtBRL.format(val * currentRate); }
+      else{ brl.value = fmtUSD.format(val / currentRate); }
+    }else{ brl.value = ''; }
   }
 
   function setManualRate(){
     const input = prompt('Informe a taxa desejada (1 USD em BRL):', currentRate.toFixed(4));
     if(input==null) return;
     const r = parseFloat(String(input).replace(',', '.'));
-    if(!Number.isFinite(r) || r <= 0){
-      alert('Valor inválido. Digite um número maior que 0.');
-      return;
-    }
-    currentRate = r;
-    localStorage.setItem('usd_brl_rate', String(currentRate));
-    setStale(true);
-    updateMeta(null);
-    showRate();
-    recalc();
+    if(!Number.isFinite(r) || r <= 0){ alert('Valor inválido.'); return; }
+    currentRate = r; localStorage.setItem('usd_brl_rate', String(currentRate)); setStale(true); updateMeta(null); showRate(); recalc();
   }
 
   function swap(){
     inverted = !inverted;
     const leftLabel = document.querySelector('label[for="usd"]');
     const rightLabel = document.querySelector('label[for="brl"]');
-
-    if(inverted){
-      leftLabel.textContent = 'Valor em BRL';
-      rightLabel.textContent = 'Resultado';
-      usd.placeholder = 'Ex.: 100,00';
-      brl.placeholder = '$ 0.00';
-      recalc();
-    }else{
-      leftLabel.textContent = 'Valor em USD';
-      rightLabel.textContent = 'Resultado';
-      usd.placeholder = 'Ex.: 25.50';
-      brl.placeholder = 'R$ 0,00';
-      recalc();
-    }
+    if(inverted){ leftLabel.textContent='Valor em BRL'; rightLabel.textContent='Resultado'; usd.placeholder='Ex.: 100,00'; brl.placeholder='$ 0.00'; }
+    else{ leftLabel.textContent='Valor em USD'; rightLabel.textContent='Resultado'; usd.placeholder='Ex.: 25.50'; brl.placeholder='R$ 0,00'; }
+    recalc();
   }
 
   usd.addEventListener('input', recalc);
   refreshBtn.addEventListener('click', fetchRate);
   editRateBtn.addEventListener('click', setManualRate);
   copyBtn.addEventListener('click', async () => {
-    if(!brl.value){
-      errorBox.textContent = 'Nada para copiar ainda.';
-      errorBox.hidden = false;
-      return;
-    }
-    try{
-      await navigator.clipboard.writeText(brl.value);
-      copyBtn.textContent = 'Copiado!';
-      setTimeout(()=> copyBtn.textContent = 'Copiar resultado', 1200);
-    }catch{
-      errorBox.textContent = 'Não foi possível copiar automaticamente.';
-      errorBox.hidden = false;
-    }
+    if(!brl.value){ errorBox.textContent='Nada para copiar ainda.'; errorBox.hidden=false; return; }
+    try{ await navigator.clipboard.writeText(brl.value); copyBtn.textContent='Copiado!'; setTimeout(()=> copyBtn.textContent='Copiar resultado', 1200); }
+    catch{ errorBox.textContent='Não foi possível copiar automaticamente.'; errorBox.hidden=false; }
   });
   swapBtn.addEventListener('click', swap);
   sideSelect.addEventListener('change', () => {
